@@ -29,12 +29,12 @@ runs:
 
   - name: Restore dependencies
     shell: bash
-    run: dotnet restore ${{ input.build-filter }}
+    run: dotnet restore ${{ inputs.build-filter }}
 
   - name: Build
     shell: bash
-    run: dotnet build ${{ input.build-filter }} --configuration ${{ input.build-configuration }} --no-restore
+    run: dotnet build ${{ inputs.build-filter }} --configuration ${{ inputs.build-configuration }} --no-restore
 
   - name: Test
     shell: bash
-    run: dotnet test ${{ input.test-filter }} --configuration ${{ input.build-configuration }} --no-build --verbosity normal
+    run: dotnet test ${{ inputs.test-filter }} --configuration ${{ inputs.build-configuration }} --no-build --verbosity normal
