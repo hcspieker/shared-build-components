@@ -18,6 +18,10 @@ inputs:
     description: 'Build artifact (e.g. path to project / solution or filter (**/*.csproj)'
     required: false
     default: '**/*[Tt]ests/*.csproj'
+  enable-tests:
+    description: 'Enable test execution'
+    required: false
+    default: 'true'
     
 runs:
   using: composite
@@ -37,4 +41,5 @@ runs:
 
   - name: Test
     shell: bash
+    if: ${{ inputs.enable-tests == 'true' }}
     run: dotnet test ${{ inputs.test-filter }} --configuration ${{ inputs.build-configuration }} --no-build --verbosity normal
