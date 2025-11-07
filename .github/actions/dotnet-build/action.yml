@@ -18,10 +18,24 @@ inputs:
     description: 'Build artifact (e.g. path to project / solution or filter (**/*.csproj)'
     required: false
     default: '**/*[Tt]ests/*.csproj'
+  publish-filter:
+    description: 'Artifact to be published'
+    required: false
+    default: '**/*.csproj'
   enable-tests:
     description: 'Enable test execution'
     required: false
     default: 'true'
+  enable-publish:
+    description: 'Enable publishing the created artifacts'
+    required: false
+    default: 'false'
+  upload-artifact-name:
+    description: 'Name of the published artifacts'
+    required: false
+    default: 'dotNetApp'
+
+  
     
 runs:
   using: composite
@@ -43,3 +57,16 @@ runs:
     shell: bash
     if: ${{ inputs.enable-tests == 'true' }}
     run: dotnet test ${{ inputs.test-filter }} --configuration ${{ inputs.build-configuration }} --no-build --verbosity normal
+
+  - name: Publish
+    shell: bash
+    if: ${{ inputs.enable-publish == 'true'}}
+    run: dotnet publish ${{ inputs.publish-filter }} --configuration ${{ inputs.build-configuration }} --output ./publish --no-build
+
+  - name: Upload artifact
+    if: ${{ inputs.enable-publish == 'true'}}
+    uses: actions/upload-artifact@v4
+    with:
+      name: ${{ inputs.upload-artifact-name }}
+      path: ./publish/
+      retention-days: 7
