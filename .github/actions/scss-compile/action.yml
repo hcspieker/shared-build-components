@@ -35,6 +35,6 @@ runs:
           filename=$(basename "$file" .scss)
           echo "Compiling: $file"
 
-          sass "$file" "${{ inputs.css-directory }}/${filename}.css"
-          sass "$file" "${{ inputs.css-directory }}/${filename}.min.css" --style=compressed
+          sass "$file" "${{ inputs.css-directory }}/${filename}.css" --no-source-map
+          sass "$file" "${{ inputs.css-directory }}/${filename}.min.css" --style=compressed --no-source-map
       done
