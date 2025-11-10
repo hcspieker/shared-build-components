@@ -28,9 +28,9 @@ runs:
       name: ${{ inputs.artifact-name }}
       path: ./
 
-#  - name: show content
-#    shell: bash
-#    run: find . -ls
+  - name: show content
+    shell: bash
+    run: find . -ls
 
   - name: Upload artifacts to temporary folder
     uses: appleboy/scp-action@v1
