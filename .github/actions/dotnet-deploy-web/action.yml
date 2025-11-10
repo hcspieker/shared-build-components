@@ -69,6 +69,9 @@ runs:
             ls -la ${{ inputs.target-directory }}/old
             echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
             echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            find ${{ inputs.target-directory }} -ls
+            echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
             echo "Removing old versions"
             rm -rf ${{ inputs.target-directory }}/old
