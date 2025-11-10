@@ -38,6 +38,7 @@ runs:
         host: ${{ inputs.ssh-host }}
         username: ${{ inputs.ssh-username }}
         key: ${{ inputs.ssh-key }}
-        source: "${{ inputs.artifact-name }}/*"
+        source: "*"
         target: "${{ inputs.target-directory }}/next"
         rm: true
+    working-directory: ./${{ inputs.artifact-name }}/
