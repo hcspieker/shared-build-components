@@ -61,10 +61,10 @@ runs:
             mv ${{ inputs.target-directory }}/next ${{ inputs.target-directory }}/current
 
             echo "correcting permissions"
-            chmod 770 -R ${{ inputs.target-directory }}
+            sudo chmod 770 -R ${{ inputs.target-directory }}
 
             echo "correcting ownership"
-            chown -R $(stat -c "%U:%G" ${{ inputs.target-directory }}) ${{ inputs.target-directory }}
+            sudo chown -R $(stat -c "%U:%G" ${{ inputs.target-directory }}) ${{ inputs.target-directory }}
 
             echo "Restarting kestrel service"
             sudo systemctl restart ${{ inputs.kestrel-service }}
