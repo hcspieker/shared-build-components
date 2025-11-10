@@ -14,6 +14,14 @@ runs:
     uses: actions/download-artifact@v4
     with:
       name: ${{ inputs.artifact-name }}
-  - name: Display structure of downloaded files
-    shell: bash
-    run: ls -R
+      path: ./${{ inputs.artifact-name }}/
+
+      
+  - name: Upload artifacts to temporary folder
+    uses: appleboy/scp-action@v1
+    with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        source: "./${{ inputs.artifact-name }}/*"
+        target: "/{{ inputs.target_dir }}/next"
