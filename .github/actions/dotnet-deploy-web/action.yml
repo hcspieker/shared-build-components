@@ -55,6 +55,21 @@ runs:
             # exit on any error
             set -e
 
+            echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            whoami
+            echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            groups
+            echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            ll ${{ inputs.target-directory }}
+            echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            ll ${{ inputs.target-directory }}/old
+            echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
             echo "Removing old versions"
             rm -rf ${{ inputs.target-directory }}/old
 
