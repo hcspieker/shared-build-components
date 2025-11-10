@@ -6,6 +6,9 @@ inputs:
     description: 'Name of the published artifacts'
     required: false
     default: 'dotNetApp'
+  target-directory:
+    description: 'Path to the target directory of the application'
+    required: true
 
 runs:
   using: composite
@@ -24,4 +27,4 @@ runs:
         username: ${{ secrets.SSH_USERNAME }}
         key: ${{ secrets.SSH_KEY }}
         source: "./${{ inputs.artifact-name }}/*"
-        target: "/{{ inputs.target_dir }}/next"
+        target: "/{{ inputs.target-directory }}/next"
