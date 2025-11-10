@@ -63,10 +63,10 @@ runs:
             groups
             echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
             echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
-            ll ${{ inputs.target-directory }}
+            ls -la ${{ inputs.target-directory }}
             echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
             echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
-            ll ${{ inputs.target-directory }}/old
+            ls -la ${{ inputs.target-directory }}/old
             echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
             echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
