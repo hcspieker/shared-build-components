@@ -28,15 +28,16 @@ runs:
       name: ${{ inputs.artifact-name }}
       path: ./${{ inputs.artifact-name }}/
 
-  - name: show content
-    shell: bash
-    run: find . -ls
+#  - name: show content
+#    shell: bash
+#    run: find . -ls
 
-#  - name: Upload artifacts to temporary folder
-#    uses: appleboy/scp-action@v1
-#    with:
-#        host: ${{ inputs.ssh-host }}
-#        username: ${{ inputs.ssh-username }}
-#        key: ${{ inputs.ssh-key }}
-#        source: "./${{ inputs.artifact-name }}/*"
-#        target: "${{ inputs.target-directory }}/next"
+  - name: Upload artifacts to temporary folder
+    uses: appleboy/scp-action@v1
+    with:
+        host: ${{ inputs.ssh-host }}
+        username: ${{ inputs.ssh-username }}
+        key: ${{ inputs.ssh-key }}
+        source: "${{ inputs.artifact-name }}/*"
+        target: "${{ inputs.target-directory }}/next"
+        rm: true
