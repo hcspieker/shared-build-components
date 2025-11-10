@@ -45,49 +45,49 @@ runs:
         target: "${{ inputs.target-directory }}/next"
         rm: true
 
-  - name: Upload artifacts to temporary folder
-    uses: appleboy/ssh-action@v1
-    with:
-        host: ${{ inputs.ssh-host }}
-        username: ${{ inputs.ssh-username }}
-        key: ${{ inputs.ssh-key }}
-        script: |
-            # exit on any error
-            set -e
-
-            echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
-            echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
-            whoami
-            echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
-            echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
-            groups
-            echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
-            echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
-            ls -la ${{ inputs.target-directory }}
-            echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
-            echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
-            ls -la ${{ inputs.target-directory }}/old
-            echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
-            echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
-            find ${{ inputs.target-directory }} -ls
-            echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
-            echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
-
-            echo "Removing old versions"
-            rm -rf ${{ inputs.target-directory }}/old
-
-            echo "Switching current -> old"
-            mv ${{ inputs.target-directory }}/current ${{ inputs.target-directory }}/old
-
-            echo "Switching next -> current"
-            mv ${{ inputs.target-directory }}/next ${{ inputs.target-directory }}/current
-
-            echo "correcting permissions"
-            chmod 770 -R ${{ inputs.target-directory }}/old
-            chmod 770 -R ${{ inputs.target-directory }}/current
-
-            echo "correcting ownership"
-            chown -R $(stat -c "%U:%G" ${{ inputs.target-directory }}) ${{ inputs.target-directory }}
-
-            echo "Restarting kestrel service"
-            sudo systemctl restart ${{ inputs.kestrel-service }}
+#  - name: Upload artifacts to temporary folder
+#    uses: appleboy/ssh-action@v1
+#    with:
+#        host: ${{ inputs.ssh-host }}
+#        username: ${{ inputs.ssh-username }}
+#        key: ${{ inputs.ssh-key }}
+#        script: |
+#            # exit on any error
+#            set -e
+#
+#            #echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
+#            #echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
+#            #whoami
+#            #echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
+#            #echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
+#            #groups
+#            #echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
+#            #echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
+#            #ls -la ${{ inputs.target-directory }}
+#            #echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
+#            #echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
+#            #ls -la ${{ inputs.target-directory }}/old
+#            #echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
+#            #echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
+#            #find ${{ inputs.target-directory }} -ls
+#            #echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
+#            #echo "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
+#
+#            echo "Removing old versions"
+#            rm -rf ${{ inputs.target-directory }}/old
+#
+#            echo "Switching current -> old"
+#            mv ${{ inputs.target-directory }}/current ${{ inputs.target-directory }}/old
+#
+#            echo "Switching next -> current"
+#            mv ${{ inputs.target-directory }}/next ${{ inputs.target-directory }}/current
+#
+#            echo "correcting permissions"
+#            chmod 770 -R ${{ inputs.target-directory }}/old
+#            chmod 770 -R ${{ inputs.target-directory }}/current
+#
+#            echo "correcting ownership"
+#            chown -R $(stat -c "%U:%G" ${{ inputs.target-directory }}) ${{ inputs.target-directory }}
+#
+#            echo "Restarting kestrel service"
+#            sudo systemctl restart ${{ inputs.kestrel-service }}
