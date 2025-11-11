@@ -90,6 +90,8 @@ runs:
               
                     echo " - removing failed version"
                     rm -rf ${{ inputs.target-directory }}/current
+
+                    echo " - enabling old version"
                     mv ${{ inputs.target-directory }}/old ${{ inputs.target-directory }}/current
                     
                     echo " - correcting permissions"
