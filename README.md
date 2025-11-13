@@ -94,3 +94,7 @@ Example usage:
       node-version: '20.x'
       css-directory: 'src/wwwroot/css'
 ```
+
+## Versioning and stability
+- For production workflows pin to a tag or commit SHA, e.g. `uses: hcspieker/shared-build-components/.github/actions/dotnet-build@v1.0.0` or `@<sha>`.
+- Using `@main` is convenient for development but can introduce breaking changes to consumers.
