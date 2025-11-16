@@ -3,6 +3,11 @@ name: Reusable Workflow to Build .NET Application
 on:
   workflow_call:
     inputs:
+      runner-name:
+        description: 'NAme of the github action runner'
+        required: false
+        type: string
+        default: 'ubuntu-latest'
       enable-scss-compile:
         description: 'Enable SCSS compilation'
         required: false
@@ -61,7 +66,7 @@ on:
  
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner-name }}
     steps:
     - uses: actions/checkout@v4
   
