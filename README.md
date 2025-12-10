@@ -17,7 +17,7 @@ Reusable workflows in this repository:
 
 ```yaml
     - name: Build dotnet projects
-      uses: hcspieker/shared-build-components/.github/actions/dotnet-build@v1.1.0
+      uses: hcspieker/shared-build-components/.github/actions/dotnet-build@v2.0.0
       with:
         build-filter: 'MySolution/MySolution.sln'
 ```
@@ -26,7 +26,7 @@ Reusable workflows in this repository:
 ```yaml
 jobs:
   call-dotnet_web_build:
-    uses: hcspieker/shared-build-components/.github/workflows/dotnet_web_build.yml@v1.1.0
+    uses: hcspieker/shared-build-components/.github/workflows/dotnet_web_build.yml@v2.0.0
     with:
       enable-scss-compile: true
       css-directory: 'MySolution/MyWebProject/wwwroot/css'
