@@ -50,7 +50,7 @@ runs:
         username: ${{ inputs.ssh-username }}
         key: ${{ inputs.ssh-key }}
         source: "*"
-        target: "${{ inputs.target-directory }}/next"
+        target: "${{ inputs.target-directory }}/next/web"
         rm: true
 
   - name: Upload artifacts to temporary folder
@@ -65,6 +65,12 @@ runs:
 
             echo "removing old versions"
             rm -rf ${{ inputs.target-directory }}/old
+
+            if [ -d "${{ inputs.target-directory }}/current/data" ]; then
+              echo "found a data directory"
+              echo "copy current data to upcoming version"
+              cp -r ${{ inputs.target-directory }}/current/data ${{ inputs.target-directory }}/next
+            fi
 
             echo "switching current -> old"
             mv ${{ inputs.target-directory }}/current ${{ inputs.target-directory }}/old
@@ -111,7 +117,7 @@ runs:
                     echo " - restarting kestrel service"
                     sudo systemctl restart ${{ inputs.kestrel-service }}
               
-                    echo "Rollback completzed. Service restored to previous version."
+                    echo "Rollback completed. Service restored to previous version."
                     exit 1
                   else
                     echo "Waiting $RETRY_DELAY seconds before retry"
