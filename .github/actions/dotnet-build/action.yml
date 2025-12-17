@@ -55,7 +55,10 @@ runs:
     shell: bash
     if: ${{ inputs.enable-tests == 'true' }}
     run: |
+      find . -type f -path '${{ inputs.test-filter }}'
+
       for project in $(find . -type f -path '${{ inputs.test-filter }}'); do
+        echo "dotnet test '$project' --configuration ${{ inputs.build-configuration }} --no-build --verbosity normal"
         dotnet test '$project' --configuration ${{ inputs.build-configuration }} --no-build --verbosity normal
       done
 
