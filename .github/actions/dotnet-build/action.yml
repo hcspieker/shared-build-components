@@ -57,7 +57,8 @@ runs:
     run: |
       find . -type f -path '**/*[Tt]ests/*.csproj' -printf '%P\n' | while ifs= read -r project; do
         echo "Testing project: $project"
-        dotnet test '$project' --configuration ${{ inputs.build-configuration }} --no-build --verbosity normal
+        echo "dotnet test '$project' --configuration ${{ inputs.build-configuration }} --no-build --verbosity normal"
+        dotnet test "$project" --configuration ${{ inputs.build-configuration }} --no-build --verbosity normal
       done
 
   - name: Publish
