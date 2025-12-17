@@ -55,7 +55,7 @@ runs:
     shell: bash
     if: ${{ inputs.enable-tests == 'true' }}
     run: |
-      find . -type f -path '**/*[Tt]ests/*.csproj' -printf '%P\n' | while ifs= read -r project; do
+      find . -type f -path '${{ inputs.test-filter }}' -printf '%P\n' | while ifs= read -r project; do
         dotnet test "$project" --configuration ${{ inputs.build-configuration }} --no-build --verbosity normal
       done
 
