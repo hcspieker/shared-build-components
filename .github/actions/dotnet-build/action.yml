@@ -35,8 +35,6 @@ inputs:
     required: false
     default: 'dotNetApp'
 
-  
-    
 runs:
   using: composite
   steps:
@@ -56,7 +54,12 @@ runs:
   - name: Test
     shell: bash
     if: ${{ inputs.enable-tests == 'true' }}
-    run: dotnet test ${{ inputs.test-filter }} --configuration ${{ inputs.build-configuration }} --no-build --verbosity normal
+    run: |
+      find . -type f -path '**/*[Tt]ests/*.csproj' -printf '%P\n' | while ifs= read -r project; do
+        echo "Testing project: $project"
+        echo "dotnet test '$project' --configuration ${{ inputs.build-configuration }} --no-build --verbosity normal"
+        dotnet test "$project" --configuration ${{ inputs.build-configuration }} --no-build --verbosity normal
+      done
 
   - name: Publish
     shell: bash
