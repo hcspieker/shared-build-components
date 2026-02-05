@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       runner-name:
-        description: 'NAme of the github action runner'
+        description: 'Name of the github action runner'
         required: false
         type: string
         default: 'ubuntu-latest'
