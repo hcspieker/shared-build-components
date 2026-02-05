@@ -1,0 +1,98 @@
+name: Reusable Workflow to Deploy a Compose File via SSH on a Remote Host
+
+on:
+  workflow_call:
+    inputs:
+      runner-name:
+        description: 'Name of the github action runner'
+        required: false
+        type: string
+        default: 'ubuntu-latest'
+      environment-name:
+        description: 'Name of the environment'
+        required: true
+        type: string
+      image-name:
+        description: 'Name of the docker image'
+        required: true
+        type: string
+      deploy-target-directory:
+        description: 'Path to the target directory of the application'
+        required: true
+        type: string
+      registry-name:
+        description: 'Name of the container registry'
+        required: true
+        type: string
+    secrets:
+      SSH_HOST:
+        required: true
+      SSH_USERNAME:
+        required: true
+      SSH_KEY:
+        required: true
+      REGISTRY_USERNAME:
+        required: true
+      REGISTRY_PASSWORD:
+        required: true
+
+jobs:
+  deploy:
+      name: Deploy to ${{ inputs.environment-name }}
+      runs-on: ${{ inputs.runner-name }}
+      environment: ${{ inputs.environment-name }}
+      needs: build
+      steps:
+        - name: Download artifact
+          uses: actions/download-artifact@v4
+          with:
+            name: modified-docker-compose
+            path: ./
+  
+        - name: Upload ${{ inputs.image-name }} Files to ${{ inputs.environment-name }}
+          uses: appleboy/scp-action@v1
+          with:
+            host: ${{ secrets.SSH_HOST }}
+            username: ${{ secrets.SSH_USERNAME }}
+            key: ${{ secrets.SSH_KEY }}
+            source: "docker-compose.yml"
+            target: "${{ inputs.deploy-target-directory }}/compose/deploy"
+            rm: true
+  
+        - name: Deploy ${{ inputs.image-name }} to ${{ inputs.environment-name }}
+          uses: appleboy/ssh-action@v1
+          env:
+            REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+            REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+          with:
+            host: ${{ secrets.SSH_HOST }}
+            username: ${{ secrets.SSH_USERNAME }}
+            key: ${{ secrets.SSH_KEY }}
+            envs: REGISTRY_USERNAME,REGISTRY_PASSWORD
+            script: |
+              cd ${{ inputs.deploy-target-directory }}/compose
+  
+              echo "login to ${{ inputs.registry-name }}"
+              echo "$REGISTRY_PASSWORD" | docker login ${{ inputs.registry-name }} -u "$REGISTRY_USERNAME" --password-stdin
+              
+              if [ -f "docker-compose.yml.bak" ]; then
+                echo "Removing old backup file"
+                rm docker-compose.yml.bak
+              fi
+  
+              if [ -f "docker-compose.yml" ]; then
+                echo "Creating backup of existing docker-compose.yml"
+                mv docker-compose.yml docker-compose.yml.bak
+              fi
+  
+              echo "Moving deployed docker-compose.yml to active location"
+              mv deploy/docker-compose.yml docker-compose.yml
+  
+              echo "Starting deployment with docker-compose"
+              docker compose pull
+              docker compose up -d --remove-orphans
+  
+              # Verify deployment
+              echo "Verifying deployment"
+              echo "todo add proper health checks later"
+  
