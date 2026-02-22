@@ -43,6 +43,7 @@ jobs:
         with:
           context: ./${{ inputs.dockerfile-directory }}
           push: false
+          load: true
           tags: ${{ inputs.image-name }}:test
           target: ${{ inputs.docker-test-target-name }}
 
