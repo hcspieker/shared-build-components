@@ -10,8 +10,11 @@ Shared actions in this repository:
 Reusable workflows in this repository:
 - Build .NET Web Applications: [dotnet_web_build](.github/workflows/dotnet_web_build.yml)
 - Build and Deploy .NET Web Applications via SSH: [dotnet_web_build_deploy_ssh](.github/workflows/dotnet_web_build_deploy_ssh.yml)
-- Build and Push Docker Images: [docker_build_and_push](.github/workflows/docker_build_and_push.yml)
-- Deploy Docker Compose via SSH: [docker_compose_deploy](.github/workflows/docker_compose_deploy.yml)
+- Docker:
+    - Build and Push Images: [docker_build_and_push](.github/workflows/docker_build_and_push.yml)
+    - Build and Test Images of .NET Applications [docker_dotnet_build_test](.github/workflows/docker_dotnet_build_test.yml)
+    - Build, Test and Push Images of .NET Applications [docker_dotnet_build_test_push](.github/workflows/docker_dotnet_build_test_push.yml)
+    - Deploy Docker Compose via SSH: [docker_compose_deploy](.github/workflows/docker_compose_deploy.yml)
 
 # Example usage
 
@@ -19,7 +22,7 @@ Reusable workflows in this repository:
 
 ```yaml
     - name: Build dotnet projects
-      uses: hcspieker/shared-build-components/.github/actions/dotnet-build@v2.2.0
+      uses: hcspieker/shared-build-components/.github/actions/dotnet-build@v2.3.0
       with:
         build-filter: 'MySolution/MySolution.sln'
 ```
@@ -28,7 +31,7 @@ Reusable workflows in this repository:
 ```yaml
 jobs:
   call-dotnet_web_build:
-    uses: hcspieker/shared-build-components/.github/workflows/dotnet_web_build.yml@v2.2.0
+    uses: hcspieker/shared-build-components/.github/workflows/dotnet_web_build.yml@v2.3.0
     with:
       enable-scss-compile: true
       css-directory: 'MySolution/MyWebProject/wwwroot/css'
@@ -38,6 +41,6 @@ jobs:
 
 ## Versioning and stability
 
-- For production workflows pin to a tag or commit SHA, e.g. `uses: hcspieker/shared-build-components/.github/actions/dotnet-build@v2.1.0` or `@<sha>`.
+- For production workflows pin to a tag or commit SHA, e.g. `uses: hcspieker/shared-build-components/.github/actions/dotnet-build@v2.3.0` or `@<sha>`.
 - Using `@main` is convenient for development but can introduce breaking changes to consumers.
 
