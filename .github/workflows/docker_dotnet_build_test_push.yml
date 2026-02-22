@@ -1,0 +1,122 @@
+name: Reusable Workflow to Build, Test and Push a Docker Image for .NET Applications and Prepare Deployment Compose File
+
+on:
+  workflow_call:
+    inputs:
+      runner-name:
+        description: 'Name of the github action runner'
+        required: false
+        type: string
+        default: 'ubuntu-latest'
+      registry-name:
+        description: 'Name of the container registry'
+        required: true
+        type: string
+      image-name:
+        description: 'Name of the docker image'
+        required: true
+        type: string
+      dockerfile-directory:
+        description: 'Directory of the dockerfile'
+        required: true
+        type: string
+      docker-compose-directory:
+        description: 'Directory of the docker-compose file'
+        required: true
+        type: string
+      version-prefix:
+        description: 'Prefix for the docker version tag (e.g. 1.0). Will be used for {image-name}:{version} and {image-name}:{version}.{timestamp}'
+        required: false
+        type: string
+        default: '1.0'
+      docker-test-target-name:
+        description: 'Name of the test-target in dockerfile'
+        required: false
+        type: string
+        default: 'test'
+      docker-test-direcotry-name:
+        description: 'Directory which contains the testresults in the docker container'
+        required: false
+        type: string
+        default: 'testresults'
+    secrets:
+      REGISTRY_USERNAME:
+        required: true
+      REGISTRY_PASSWORD:
+        required: true
+
+jobs:
+  build:
+    name: Build and push ${{ inputs.image-name }} Docker image
+    runs-on: ${{ inputs.runner-name }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
+      - name: Generate version
+        id: version
+        run: echo "VERSION=${{ inputs.version-prefix }}.$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
+
+      - name: Login to ${{ inputs.registry-name }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ inputs.registry-name }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and test Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./${{ inputs.dockerfile-directory }}
+          push: false
+          tags: ${{ inputs.registry-name }}/${{ inputs.image-name }}:test-${{ steps.version.outputs.VERSION }}
+          target: ${{ inputs.docker-test-target-name }}
+
+      - name: Run extract tests from Docker image
+        run: |
+          cid=$(docker create ${{ inputs.registry-name }}/${{ inputs.image-name }}:test-${{ steps.version.outputs.VERSION }})
+          mkdir -p testresults
+          docker cp $cid:/${{ inputs.docker-test-direcotry-name }}/. testresults/
+          docker rm -f $cid
+
+          echo "Extracted test results:"
+          ls -laR testresults
+
+      - name: Publish test results
+        uses: dorny/test-reporter@v2
+        with:
+          name: Unit Tests
+          path: testresults/*.trx
+          reporter: dotnet-trx
+          fail-on-error: true
+
+      - name: Upload TRX artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-trx
+          path: testresults/*.trx
+
+      - name: Build and push final Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./${{ inputs.dockerfile-directory }}
+          push: true
+          tags: |
+            ${{ inputs.registry-name }}/${{ inputs.image-name }}:latest
+            ${{ inputs.registry-name }}/${{ inputs.image-name }}:${{ inputs.version-prefix }}
+            ${{ inputs.registry-name }}/${{ inputs.image-name }}:${{ steps.version.outputs.VERSION }}
+
+      - name: Prepare deployment docker-compose
+        run: |
+          sed "s|build: \.|image: ${{ inputs.registry-name }}/${{ inputs.image-name }}:${{ steps.version.outputs.VERSION }}|g" \
+            ${{ inputs.docker-compose-directory }}/docker-compose.yml > docker-compose.yml
+
+      - name: Upload docker-compose artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: modified-docker-compose
+          path: docker-compose.yml
+          retention-days: 5
