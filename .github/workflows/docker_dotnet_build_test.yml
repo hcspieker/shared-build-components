@@ -48,7 +48,7 @@ jobs:
 
       - name: Run extract tests from Docker image
         run: |
-          cid=$(docker create ${{ inputs.image-name }}:test
+          cid=$(docker create ${{ inputs.image-name }}:test)
           mkdir -p testresults
           docker cp $cid:/${{ inputs.docker-test-directory-name }}/. testresults/
           docker rm -f $cid
