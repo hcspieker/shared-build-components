@@ -73,12 +73,18 @@ jobs:
 
       - name: Prepare deployment docker-compose
         run: |
-          sed "s|build: \.|image: ${{ inputs.registry-name }}/${{ inputs.image-name }}:${{ steps.version.outputs.VERSION }}|g" \
-            ${{ inputs.docker-compose-directory }}/docker-compose.yml > docker-compose.yml
+          mkdir -p deployment-compose
+          for file in ${{ inputs.docker-compose-directory }}/docker-compose*.yml; do
+            if [ -f "$file" ]; then
+              filename=$(basename "$file")
+              sed "s|build: \.|image: ${{ inputs.registry-name }}/${{ inputs.image-name }}:${{ steps.version.outputs.VERSION }}|g" \
+                "$file" > "deployment-compose/$filename"
+            fi
+          done
 
       - name: Upload docker-compose artifact
         uses: actions/upload-artifact@v4
         with:
           name: modified-docker-compose
-          path: docker-compose.yml
+          path: deployment-compose/
           retention-days: 5
