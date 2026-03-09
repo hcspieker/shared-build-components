@@ -26,6 +26,7 @@ runs:
   - name: Compile SCSS
     shell: bash
     run: |
+      set -eu
       find ${{ inputs.css-directory }} -name "*.scss" -type f | while read file; do
           if [[ $(basename "$file") = _* ]]; then
               echo "Skipping parital file: $file"
