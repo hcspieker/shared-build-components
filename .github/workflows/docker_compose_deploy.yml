@@ -69,6 +69,7 @@ jobs:
             key: ${{ secrets.SSH_KEY }}
             envs: REGISTRY_USERNAME,REGISTRY_PASSWORD
             script: |
+              set -eu
               cd ${{ inputs.deploy-target-directory }}/compose
   
               echo "login to ${{ inputs.registry-name }}"
