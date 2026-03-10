@@ -12,7 +12,7 @@ on:
         description: 'Name of the environment'
         required: true
         type: string
-      docker-compose-filename:
+      docker-compose-file:
         description: 'Name of the docker-compose file'
         required: false
         type: string
@@ -59,7 +59,7 @@ jobs:
             host: ${{ secrets.SSH_HOST }}
             username: ${{ secrets.SSH_USERNAME }}
             key: ${{ secrets.SSH_KEY }}
-            source: "${{ inputs.docker-compose-filename }}"
+            source: "${{ inputs.docker-compose-file }}"
             target: "${{ inputs.deploy-target-directory }}/compose/deploy"
             rm: true
   
@@ -91,7 +91,7 @@ jobs:
               fi
   
               echo "Moving deployed docker-compose.yml to active location"
-              mv deploy/${{ inputs.docker-compose-filename }} docker-compose.yml
+              mv deploy/${{ inputs.docker-compose-file }} docker-compose.yml
   
               echo "Starting deployment with docker-compose"
               docker compose pull
