@@ -8,6 +8,11 @@ on:
         required: false
         type: string
         default: 'ubuntu-latest'
+      docker-target-platform:
+        description: 'Target platform for docker build and push (e.g. linux/amd64,linux/arm64)'
+        required: false
+        type: string
+        default: 'linux/amd64'
       registry-name:
         description: 'Name of the container registry'
         required: true
@@ -63,7 +68,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v7
         with:
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ inputs.docker-target-platform }}
           context: ./${{ inputs.dockerfile-directory }}
           push: true
           tags: |
