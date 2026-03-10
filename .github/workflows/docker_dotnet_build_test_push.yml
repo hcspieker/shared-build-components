@@ -39,7 +39,7 @@ on:
         required: false
         type: string
         default: 'test'
-      docker-test-direcotry-name:
+      docker-test-directory-name:
         description: 'Directory which contains the testresults in the docker container'
         required: false
         type: string
@@ -90,7 +90,7 @@ jobs:
           set -eu
           cid=$(docker create ${{ inputs.image-name }}:test)
           mkdir -p testresults
-          docker cp $cid:/${{ inputs.docker-test-direcotry-name }}/. testresults/
+          docker cp $cid:/${{ inputs.docker-test-directory-name }}/. testresults/
           docker rm -f $cid
 
           echo "Extracted test results:"
