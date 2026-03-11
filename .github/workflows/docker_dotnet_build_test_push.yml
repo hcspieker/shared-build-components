@@ -8,6 +8,11 @@ on:
         required: false
         type: string
         default: 'ubuntu-latest'
+      docker-target-platform:
+        description: 'Target platform for docker build and push (e.g. linux/amd64,linux/arm64)'
+        required: false
+        type: string
+        default: 'linux/amd64'
       registry-name:
         description: 'Name of the container registry'
         required: true
@@ -34,7 +39,7 @@ on:
         required: false
         type: string
         default: 'test'
-      docker-test-direcotry-name:
+      docker-test-directory-name:
         description: 'Directory which contains the testresults in the docker container'
         required: false
         type: string
@@ -73,7 +78,7 @@ jobs:
       - name: Build and test Docker image
         uses: docker/build-push-action@v7
         with:
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ inputs.docker-target-platform }}
           context: ./${{ inputs.dockerfile-directory }}
           push: false
           load: true
@@ -85,7 +90,7 @@ jobs:
           set -eu
           cid=$(docker create ${{ inputs.image-name }}:test)
           mkdir -p testresults
-          docker cp $cid:/${{ inputs.docker-test-direcotry-name }}/. testresults/
+          docker cp $cid:/${{ inputs.docker-test-directory-name }}/. testresults/
           docker rm -f $cid
 
           echo "Extracted test results:"
@@ -108,22 +113,28 @@ jobs:
       - name: Build and push final Docker image
         uses: docker/build-push-action@v7
         with:
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ inputs.docker-target-platform }}
           context: ./${{ inputs.dockerfile-directory }}
           push: true
           tags: |
             ${{ inputs.registry-name }}/${{ inputs.image-name }}:latest
             ${{ inputs.registry-name }}/${{ inputs.image-name }}:${{ inputs.version-prefix }}
             ${{ inputs.registry-name }}/${{ inputs.image-name }}:${{ steps.version.outputs.VERSION }}
-
+            
       - name: Prepare deployment docker-compose
         run: |
-          sed "s|build: \.|image: ${{ inputs.registry-name }}/${{ inputs.image-name }}:${{ steps.version.outputs.VERSION }}|g" \
-            ${{ inputs.docker-compose-directory }}/docker-compose.yml > docker-compose.yml
+          mkdir -p deployment-compose
+          for file in ${{ inputs.docker-compose-directory }}/docker-compose*.yml; do
+            if [ -f "$file" ]; then
+              filename=$(basename "$file")
+              sed "s|build: \.|image: ${{ inputs.registry-name }}/${{ inputs.image-name }}:${{ steps.version.outputs.VERSION }}|g" \
+                "$file" > "deployment-compose/$filename"
+            fi
+          done
 
       - name: Upload docker-compose artifact
         uses: actions/upload-artifact@v4
         with:
           name: modified-docker-compose
-          path: docker-compose.yml
+          path: deployment-compose/
           retention-days: 5
