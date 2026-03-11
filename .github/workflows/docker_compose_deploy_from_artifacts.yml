@@ -1,4 +1,4 @@
-name: Reusable Workflow to Deploy a Compose File via SSH on a Remote Host
+name: Reusable Workflow to Deploy a Compose File from Artifacts via SSH on a Remote Host
 
 on:
   workflow_call:
@@ -17,10 +17,6 @@ on:
         required: false
         type: string
         default: 'docker-compose.yml'
-      image-name:
-        description: 'Name of the docker image'
-        required: true
-        type: string
       deploy-target-directory:
         description: 'Path to the target directory of the application'
         required: true
@@ -53,7 +49,7 @@ jobs:
             name: modified-docker-compose
             path: ./
   
-        - name: Upload ${{ inputs.image-name }} Files to ${{ inputs.environment-name }}
+        - name: Upload ${{ inputs.docker-compose-file }} File to ${{ inputs.environment-name }}
           uses: appleboy/scp-action@v1
           with:
             host: ${{ secrets.SSH_HOST }}
@@ -63,7 +59,7 @@ jobs:
             target: "${{ inputs.deploy-target-directory }}/compose/deploy"
             rm: true
   
-        - name: Deploy ${{ inputs.image-name }} to ${{ inputs.environment-name }}
+        - name: Deploy ${{ inputs.docker-compose-file }} to ${{ inputs.environment-name }}
           uses: appleboy/ssh-action@v1
           env:
             REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
