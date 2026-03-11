@@ -1,0 +1,91 @@
+name: Reusable Workflow to Deploy a Compose File from Source via SSH on a Remote Host
+
+on:
+  workflow_call:
+    inputs:
+      runner-name:
+        description: 'Name of the github action runner'
+        required: false
+        type: string
+        default: 'ubuntu-latest'
+      environment-name:
+        description: 'Name of the environment'
+        required: true
+        type: string
+      docker-compose-source-directory:
+        description: 'Source directory of the docker-compose file'
+        required: true
+        type: string
+      docker-compose-file:
+        description: 'Name of the docker-compose file'
+        required: false
+        type: string
+        default: 'docker-compose.yml'
+      deploy-target-directory:
+        description: 'Path to the target directory of the application'
+        required: true
+        type: string
+    secrets:
+      SSH_HOST:
+        required: true
+      SSH_USERNAME:
+        required: true
+      SSH_KEY:
+        required: true
+
+jobs:
+  deploy:
+      name: Deploy to ${{ inputs.environment-name }}
+      runs-on: ${{ inputs.runner-name }}
+      environment: ${{ inputs.environment-name }}
+      steps:
+        - name: Checkout repository
+          uses: actions/checkout@v3
+
+        - name: Prepare upload of ${{ inputs.docker-compose-file }}
+          run: |
+            mkdir staging_directory
+            mv ${{ inputs.docker-compose-source-directory }}/${{ inputs.docker-compose-file }} staging_directory/${{ inputs.docker-compose-file }}
+  
+        - name: Upload ${{ inputs.docker-compose-file }} File to ${{ inputs.environment-name }}
+          uses: appleboy/scp-action@v1
+          with:
+            host: ${{ secrets.SSH_HOST }}
+            username: ${{ secrets.SSH_USERNAME }}
+            key: ${{ secrets.SSH_KEY }}
+            source: staging_directory/${{ inputs.docker-compose-file }}
+            target: ${{ inputs.deploy-target-directory }}/compose/deploy
+            strip_components: 1
+            rm: true
+  
+        - name: Deploy ${{ inputs.docker-compose-file }} to ${{ inputs.environment-name }}
+          uses: appleboy/ssh-action@v1
+          with:
+            host: ${{ secrets.SSH_HOST }}
+            username: ${{ secrets.SSH_USERNAME }}
+            key: ${{ secrets.SSH_KEY }}
+            script: |
+              set -eu
+              cd ${{ inputs.deploy-target-directory }}/compose
+  
+              if [ -f "docker-compose.yml.bak" ]; then
+                echo "Removing old backup file"
+                rm docker-compose.yml.bak
+              fi
+  
+              if [ -f "docker-compose.yml" ]; then
+                echo "Creating backup of existing docker-compose.yml"
+                mv docker-compose.yml docker-compose.yml.bak
+              fi
+  
+              echo "Moving deployed docker-compose.yml to active location"
+              mv deploy/${{ inputs.docker-compose-file }} docker-compose.yml
+  
+              echo "Starting deployment with docker-compose"
+              docker compose pull
+              docker compose up -d --remove-orphans
+  
+              # Verify deployment
+              echo "Verifying deployment"
+              echo "todo add proper health checks later"
+  
