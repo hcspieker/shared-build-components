@@ -34,7 +34,7 @@ on:
 
 jobs:
   build:
-    name: Build and push ${{ inputs.image-name }} Docker image
+    name: Build and test ${{ inputs.image-name }} Docker image
     runs-on: ${{ inputs.runner-name }}
     steps:
       - name: Checkout repository
