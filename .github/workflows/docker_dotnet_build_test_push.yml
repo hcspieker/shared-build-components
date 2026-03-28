@@ -8,8 +8,13 @@ on:
         required: false
         type: string
         default: 'ubuntu-latest'
-      docker-target-platform:
-        description: 'Target platform for docker build and push (e.g. linux/amd64,linux/arm64)'
+      docker-test-platform:
+        description: 'Target platform for the Docker test build. Must be a single platform (e.g. linux/amd64)'
+        required: false
+        type: string
+        default: 'linux/amd64'
+      docker-publish-platform:
+        description: 'Target platform for the final Docker image publish step. Can be a multi platform string (e.g. linux/amd64,linux/arm64)'
         required: false
         type: string
         default: 'linux/amd64'
@@ -78,7 +83,7 @@ jobs:
       - name: Build and test Docker image
         uses: docker/build-push-action@v7
         with:
-          platforms: ${{ inputs.docker-target-platform }}
+          platforms: ${{ inputs.docker-test-platform }}
           context: ${{ inputs.docker-build-context }}
           push: false
           load: true
@@ -113,7 +118,7 @@ jobs:
       - name: Build and push final Docker image
         uses: docker/build-push-action@v7
         with:
-          platforms: ${{ inputs.docker-target-platform }}
+          platforms: ${{ inputs.docker-publish-platform }}
           context: ${{ inputs.docker-build-context }}
           push: true
           tags: |
