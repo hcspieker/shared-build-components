@@ -17,8 +17,8 @@ on:
         description: 'Name of the docker image'
         required: true
         type: string
-      dockerfile-directory:
-        description: 'Directory of the dockerfile'
+      docker-build-context:
+        description: 'Path to the Docker build context directory relative to the repository root'
         required: true
         type: string
       docker-test-target-name:
@@ -50,7 +50,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           platforms: ${{ inputs.docker-target-platform }}
-          context: ./${{ inputs.dockerfile-directory }}
+          context: ${{ inputs.docker-build-context }}
           push: false
           load: true
           tags: ${{ inputs.image-name }}:test
@@ -84,6 +84,6 @@ jobs:
       - name: Build final Docker image
         uses: docker/build-push-action@v7
         with:
-          context: ./${{ inputs.dockerfile-directory }}
+          context: ${{ inputs.docker-build-context }}
           push: false
           tags: ${{ inputs.image-name }}:latest

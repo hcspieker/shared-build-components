@@ -21,12 +21,12 @@ on:
         description: 'Name of the docker image'
         required: true
         type: string
-      dockerfile-directory:
-        description: 'Directory of the dockerfile'
+      docker-build-context:
+        description: 'Path to the Docker build context directory relative to the repository root'
         required: true
         type: string
-      docker-compose-directory:
-        description: 'Directory of the docker-compose file'
+      docker-compose-file-pattern:
+        description: 'Docker Compose file path or glob pattern relative to the repository root'
         required: true
         type: string
       version-prefix:
@@ -69,7 +69,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           platforms: ${{ inputs.docker-target-platform }}
-          context: ./${{ inputs.dockerfile-directory }}
+          context: ${{ inputs.docker-build-context }}
           push: true
           tags: |
             ${{ inputs.registry-name }}/${{ inputs.image-name }}:latest
@@ -79,7 +79,7 @@ jobs:
       - name: Prepare deployment docker-compose
         run: |
           mkdir -p deployment-compose
-          for file in ${{ inputs.docker-compose-directory }}/docker-compose*.yml; do
+          for file in ${{ inputs.docker-compose-file-pattern }}; do
             if [ -f "$file" ]; then
               filename=$(basename "$file")
               sed "s|build: \.|image: ${{ inputs.registry-name }}/${{ inputs.image-name }}:${{ steps.version.outputs.VERSION }}|g" \
