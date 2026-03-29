@@ -3,18 +3,18 @@
 This repository contains shared actions and reusable workflows which are used across my repositories to standardize and simplify build and deploy pipelines.
 
 Shared actions in this repository: 
-- SCSS compilation: [scss-compile](.github/actions/scss-compile/action.yml)
-- .NET build, test, publish: [dotnet-build](.github/actions/dotnet-build/action.yml)
-- .NET web app deployment via SSH: [dotnet-deploy-web](.github/actions/dotnet-deploy-web/action.yml)
+- Compile SCSS assets in place: [scss-compile](.github/actions/scss-compile/action.yml)
+- Restore, build, test, and publish .NET projects: [dotnet-build](.github/actions/dotnet-build/action.yml)
+- Deploy published .NET web apps via SSH with optional health checks and rollback: [dotnet-deploy-web](.github/actions/dotnet-deploy-web/action.yml)
 
 Reusable workflows in this repository:
-- Build .NET Web Applications: [dotnet_web_build](.github/workflows/dotnet_web_build.yml)
-- Build and Deploy .NET Web Applications via SSH: [dotnet_web_build_deploy_ssh](.github/workflows/dotnet_web_build_deploy_ssh.yml)
-- Docker:
-    - Build and Push Images: [docker_build_and_push](.github/workflows/docker_build_and_push.yml)
-    - Build and Test Images of .NET Applications [docker_dotnet_build_test](.github/workflows/docker_dotnet_build_test.yml)
-    - Build, Test and Push Images of .NET Applications [docker_dotnet_build_test_push](.github/workflows/docker_dotnet_build_test_push.yml)
-    - Deploy Docker Compose via SSH: [docker_compose_deploy](.github/workflows/docker_compose_deploy.yml)
+- Build .NET web applications: [dotnet_web_build](.github/workflows/dotnet_web_build.yml)
+- Build and deploy .NET web applications via SSH: [dotnet_web_build_deploy_ssh](.github/workflows/dotnet_web_build_deploy_ssh.yml)
+- Build Docker images, with optional registry push and deployment compose artifact generation: [docker_build](.github/workflows/docker_build.yml)
+- Build and test Docker images for .NET applications, with optional registry push: [docker_dotnet_build](.github/workflows/docker_dotnet_build.yml)
+- Build, test, and publish multi-platform Docker images for .NET applications: [docker_dotnet_build_multi_platform](.github/workflows/docker_dotnet_build_multi_platform.yml)
+- Deploy a Docker Compose file from repository source via SSH: [docker_compose_deploy_from_source](.github/workflows/docker_compose_deploy_from_source.yml)
+- Deploy a Docker Compose artifact via SSH: [docker_compose_deploy_from_artifacts](.github/workflows/docker_compose_deploy_from_artifacts.yml)
 
 # Example usage
 
@@ -22,7 +22,7 @@ Reusable workflows in this repository:
 
 ```yaml
     - name: Build dotnet projects
-      uses: hcspieker/shared-build-components/.github/actions/dotnet-build@v2.3.0
+      uses: hcspieker/shared-build-components/.github/actions/dotnet-build@v3.0.0
       with:
         build-filter: 'MySolution/MySolution.sln'
 ```
@@ -31,7 +31,7 @@ Reusable workflows in this repository:
 ```yaml
 jobs:
   call-dotnet_web_build:
-    uses: hcspieker/shared-build-components/.github/workflows/dotnet_web_build.yml@v2.3.0
+    uses: hcspieker/shared-build-components/.github/workflows/dotnet_web_build.yml@v3.0.0
     with:
       enable-scss-compile: true
       css-directory: 'MySolution/MyWebProject/wwwroot/css'
@@ -41,6 +41,6 @@ jobs:
 
 ## Versioning and stability
 
-- For production workflows pin to a tag or commit SHA, e.g. `uses: hcspieker/shared-build-components/.github/actions/dotnet-build@v2.3.0` or `@<sha>`.
+- For production workflows pin to a tag or commit SHA, e.g. `uses: hcspieker/shared-build-components/.github/actions/dotnet-build@v3.0.0` or `@<sha>`.
 - Using `@main` is convenient for development but can introduce breaking changes to consumers.
 

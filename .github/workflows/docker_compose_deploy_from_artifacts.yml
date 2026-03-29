@@ -1,4 +1,4 @@
-name: Reusable Workflow to Deploy a Compose File via SSH on a Remote Host
+name: Reusable Workflow to Deploy a Compose File from Artifacts via SSH on a Remote Host
 
 on:
   workflow_call:
@@ -12,10 +12,11 @@ on:
         description: 'Name of the environment'
         required: true
         type: string
-      image-name:
-        description: 'Name of the docker image'
-        required: true
+      docker-compose-file:
+        description: 'Name of the docker-compose file'
+        required: false
         type: string
+        default: 'docker-compose.yml'
       deploy-target-directory:
         description: 'Path to the target directory of the application'
         required: true
@@ -43,22 +44,22 @@ jobs:
       environment: ${{ inputs.environment-name }}
       steps:
         - name: Download artifact
-          uses: actions/download-artifact@v4
+          uses: actions/download-artifact@v8
           with:
             name: modified-docker-compose
             path: ./
   
-        - name: Upload ${{ inputs.image-name }} Files to ${{ inputs.environment-name }}
+        - name: Upload ${{ inputs.docker-compose-file }} File to ${{ inputs.environment-name }}
           uses: appleboy/scp-action@v1
           with:
             host: ${{ secrets.SSH_HOST }}
             username: ${{ secrets.SSH_USERNAME }}
             key: ${{ secrets.SSH_KEY }}
-            source: "docker-compose.yml"
+            source: "${{ inputs.docker-compose-file }}"
             target: "${{ inputs.deploy-target-directory }}/compose/deploy"
             rm: true
   
-        - name: Deploy ${{ inputs.image-name }} to ${{ inputs.environment-name }}
+        - name: Deploy ${{ inputs.docker-compose-file }} to ${{ inputs.environment-name }}
           uses: appleboy/ssh-action@v1
           env:
             REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
@@ -86,7 +87,7 @@ jobs:
               fi
   
               echo "Moving deployed docker-compose.yml to active location"
-              mv deploy/docker-compose.yml docker-compose.yml
+              mv deploy/${{ inputs.docker-compose-file }} docker-compose.yml
   
               echo "Starting deployment with docker-compose"
               docker compose pull

@@ -1,0 +1,199 @@
+name: Reusable Workflow to Build and Push a Multi-Platform Docker Image for .NET Applications
+
+on:
+  workflow_call:
+    inputs:
+      amd64-runner-name:
+        description: 'Name of the github action runner used for linux/amd64 work'
+        required: false
+        type: string
+        default: 'ubuntu-latest'
+      arm64-runner-name:
+        description: 'Name of the github action runner used for native linux/arm64 work'
+        required: false
+        type: string
+        default: 'ubuntu-24.04-arm'
+      registry-name:
+        description: 'Name of the container registry'
+        required: true
+        type: string
+      image-name:
+        description: 'Name of the docker image'
+        required: true
+        type: string
+      docker-build-context:
+        description: 'Path to the Docker build context directory relative to the repository root'
+        required: true
+        type: string
+      docker-compose-file-pattern:
+        description: 'Docker Compose file path or glob pattern relative to the repository root'
+        required: true
+        type: string
+      version-prefix:
+        description: 'Prefix for the docker version tag (e.g. 1.0). Will be used for {image-name}:{version} and {image-name}:{version}.{timestamp}'
+        required: false
+        type: string
+        default: '1.0'
+      docker-test-target-name:
+        description: 'Name of the test-target in dockerfile'
+        required: false
+        type: string
+        default: 'test'
+      docker-test-directory-name:
+        description: 'Directory which contains the testresults in the docker container'
+        required: false
+        type: string
+        default: 'testresults'
+    secrets:
+      REGISTRY_USERNAME:
+        required: true
+      REGISTRY_PASSWORD:
+        required: true
+
+jobs:
+  build-test:
+    name: Build, test and publish ${{ inputs.image-name }} Docker image for linux/amd64
+    runs-on: ${{ inputs.amd64-runner-name }}
+    outputs:
+      version: ${{ steps.version.outputs.VERSION }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Generate version
+        id: version
+        run: echo "VERSION=${{ inputs.version-prefix }}.$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build and test Docker image
+        uses: docker/build-push-action@v7
+        with:
+          platforms: linux/amd64
+          context: ${{ inputs.docker-build-context }}
+          push: false
+          load: true
+          tags: ${{ inputs.image-name }}:test
+          target: ${{ inputs.docker-test-target-name }}
+
+      - name: Run extract tests from Docker image
+        run: |
+          set -eu
+          cid=$(docker create ${{ inputs.image-name }}:test)
+          mkdir -p testresults
+          docker cp $cid:/${{ inputs.docker-test-directory-name }}/. testresults/
+          docker rm -f $cid
+
+          echo "Extracted test results:"
+          ls -laR testresults
+
+      - name: Publish test results
+        uses: dorny/test-reporter@v3
+        with:
+          name: Unit Tests
+          path: testresults/*.trx
+          reporter: dotnet-trx
+          fail-on-error: true
+
+      - name: Upload TRX artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-trx
+          path: testresults/*.trx
+
+      - name: Login to ${{ inputs.registry-name }}
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ inputs.registry-name }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build and push linux/amd64 image variant
+        uses: docker/build-push-action@v7
+        with:
+          platforms: linux/amd64
+          context: ${{ inputs.docker-build-context }}
+          push: true
+          tags: ${{ inputs.registry-name }}/${{ inputs.image-name }}:${{ steps.version.outputs.VERSION }}-amd64
+
+  publish-arm64:
+    name: Publish ${{ inputs.image-name }} Docker image for linux/arm64
+    needs: build-test
+    runs-on: ${{ inputs.arm64-runner-name }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Login to ${{ inputs.registry-name }}
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ inputs.registry-name }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build and push linux/arm64 image variant
+        uses: docker/build-push-action@v7
+        with:
+          platforms: linux/arm64
+          context: ${{ inputs.docker-build-context }}
+          push: true
+          tags: ${{ inputs.registry-name }}/${{ inputs.image-name }}:${{ needs.build-test.outputs.version }}-arm64
+
+  merge-manifests:
+    name: Merge published image variants into multi-platform tags
+    needs:
+      - build-test
+      - publish-arm64
+    runs-on: ${{ inputs.amd64-runner-name }}
+    steps:
+      - name: Login to ${{ inputs.registry-name }}
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ inputs.registry-name }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Create multi-platform manifest tags
+        run: |
+          set -eu
+          docker buildx imagetools create \
+            -t ${{ inputs.registry-name }}/${{ inputs.image-name }}:latest \
+            -t ${{ inputs.registry-name }}/${{ inputs.image-name }}:${{ inputs.version-prefix }} \
+            -t ${{ inputs.registry-name }}/${{ inputs.image-name }}:${{ needs.build-test.outputs.version }} \
+            ${{ inputs.registry-name }}/${{ inputs.image-name }}:${{ needs.build-test.outputs.version }}-amd64 \
+            ${{ inputs.registry-name }}/${{ inputs.image-name }}:${{ needs.build-test.outputs.version }}-arm64
+
+  prepare-deployment-compose:
+    name: Prepare deployment docker-compose
+    needs:
+      - build-test
+      - merge-manifests
+    runs-on: ${{ inputs.amd64-runner-name }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Prepare deployment docker-compose
+        run: |
+          mkdir -p deployment-compose
+          for file in ${{ inputs.docker-compose-file-pattern }}; do
+            if [ -f "$file" ]; then
+              filename=$(basename "$file")
+              sed "s|build: \.|image: ${{ inputs.registry-name }}/${{ inputs.image-name }}:${{ needs.build-test.outputs.version }}|g" \
+                "$file" > "deployment-compose/$filename"
+            fi
+          done
+
+      - name: Upload docker-compose artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: modified-docker-compose
+          path: deployment-compose/
+          retention-days: 5

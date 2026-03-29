@@ -1,0 +1,130 @@
+name: Reusable Workflow to Build a Docker Image
+
+on:
+  workflow_call:
+    inputs:
+      runner-name:
+        description: 'Name of the github action runner'
+        required: false
+        type: string
+        default: 'ubuntu-latest'
+      docker-platforms:
+        description: 'Target platform for the Docker image build'
+        required: false
+        type: string
+        default: 'linux/amd64'
+      image-name:
+        description: 'Name of the docker image'
+        required: true
+        type: string
+      docker-build-context:
+        description: 'Path to the Docker build context directory relative to the repository root'
+        required: true
+        type: string
+      enable-push:
+        description: 'Whether the final image should be pushed and the deployment docker-compose artifact should be prepared.'
+        required: false
+        type: boolean
+        default: false
+      registry-name:
+        description: 'Name of the container registry. Required when enable-push is true.'
+        required: false
+        type: string
+        default: ''
+      docker-compose-file-pattern:
+        description: 'Docker Compose file path or glob pattern relative to the repository root. Required when enable-push is true.'
+        required: false
+        type: string
+        default: ''
+      version-prefix:
+        description: 'Prefix for the docker version tag (e.g. 1.0). Will be used for {image-name}:{version} and {image-name}:{version}.{timestamp}'
+        required: false
+        type: string
+        default: '1.0'
+    secrets:
+      REGISTRY_USERNAME:
+        required: false
+      REGISTRY_PASSWORD:
+        required: false
+
+jobs:
+  build:
+    name: Build ${{ inputs.image-name }} Docker image
+    runs-on: ${{ inputs.runner-name }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Generate version
+        if: ${{ inputs.enable-push }}
+        id: version
+        run: echo "VERSION=${{ inputs.version-prefix }}.$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
+
+      - name: Validate push inputs
+        if: ${{ inputs.enable-push }}
+        env:
+          REGISTRY_NAME: ${{ inputs.registry-name }}
+          DOCKER_COMPOSE_FILE_PATTERN: ${{ inputs.docker-compose-file-pattern }}
+          REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+        run: |
+          set -eu
+          test -n "$REGISTRY_NAME"
+          test -n "$DOCKER_COMPOSE_FILE_PATTERN"
+          test -n "$REGISTRY_USERNAME"
+          test -n "$REGISTRY_PASSWORD"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build Docker image
+        if: ${{ !inputs.enable-push }}
+        uses: docker/build-push-action@v7
+        with:
+          platforms: ${{ inputs.docker-platforms }}
+          context: ${{ inputs.docker-build-context }}
+          push: false
+          tags: ${{ inputs.image-name }}:latest
+
+      - name: Login to ${{ inputs.registry-name }}
+        if: ${{ inputs.enable-push }}
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ inputs.registry-name }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build and push Docker image
+        if: ${{ inputs.enable-push }}
+        uses: docker/build-push-action@v7
+        with:
+          platforms: ${{ inputs.docker-platforms }}
+          context: ${{ inputs.docker-build-context }}
+          push: true
+          tags: |
+            ${{ inputs.registry-name }}/${{ inputs.image-name }}:latest
+            ${{ inputs.registry-name }}/${{ inputs.image-name }}:${{ inputs.version-prefix }}
+            ${{ inputs.registry-name }}/${{ inputs.image-name }}:${{ steps.version.outputs.VERSION }}
+
+      - name: Prepare deployment docker-compose
+        if: ${{ inputs.enable-push }}
+        run: |
+          mkdir -p deployment-compose
+          for file in ${{ inputs.docker-compose-file-pattern }}; do
+            if [ -f "$file" ]; then
+              filename=$(basename "$file")
+              sed "s|build: \.|image: ${{ inputs.registry-name }}/${{ inputs.image-name }}:${{ steps.version.outputs.VERSION }}|g" \
+                "$file" > "deployment-compose/$filename"
+            fi
+          done
+
+      - name: Upload docker-compose artifact
+        if: ${{ inputs.enable-push }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: modified-docker-compose
+          path: deployment-compose/
+          retention-days: 5
