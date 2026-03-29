@@ -63,7 +63,7 @@ jobs:
     runs-on: ${{ inputs.runner-name }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
 
       - name: Generate version
         if: ${{ inputs.enable-push }}
@@ -112,7 +112,7 @@ jobs:
           ls -laR testresults
 
       - name: Publish test results
-        uses: dorny/test-reporter@v2
+        uses: dorny/test-reporter@v3
         with:
           name: Unit Tests
           path: testresults/*.trx
@@ -120,7 +120,7 @@ jobs:
           fail-on-error: true
 
       - name: Upload TRX artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results-trx
           path: testresults/*.trx
@@ -168,7 +168,7 @@ jobs:
 
       - name: Upload docker-compose artifact
         if: ${{ inputs.enable-push }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: modified-docker-compose
           path: deployment-compose/

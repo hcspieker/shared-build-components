@@ -40,7 +40,7 @@ jobs:
       environment: ${{ inputs.environment-name }}
       steps:
         - name: Checkout repository
-          uses: actions/checkout@v3
+          uses: actions/checkout@v6
 
         - name: Prepare upload of ${{ inputs.docker-compose-file }}
           run: |
