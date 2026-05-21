@@ -56,6 +56,10 @@ on:
         required: false
       REGISTRY_PASSWORD:
         required: false
+    outputs:
+      version:
+        description: 'The generated version tag for the built docker image, in the format {version-prefix}.{timestamp} (e.g. 1.0.20240610123045). Will be empty if enable-push is false.'
+        value: ${{ jobs.build.outputs.version }}
 
 jobs:
   build:
