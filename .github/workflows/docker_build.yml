@@ -40,7 +40,7 @@ on:
         description: 'Whether a modified docker-compose file should be prepared for deployment, where the build context is replaced with the built image from the registry. The docker-compose file(s) to modify is determined by the docker-compose-file-pattern input. Requires enable-push to be true.'
         required: false
         type: boolean
-        default: false
+        default: true
       docker-compose-file-pattern:
         description: 'Docker Compose file path or glob pattern relative to the repository root. Required when prepare-deployment-compose is true.'
         required: false
@@ -76,15 +76,21 @@ jobs:
         if: ${{ inputs.enable-push }}
         env:
           REGISTRY_NAME: ${{ inputs.registry-name }}
-          DOCKER_COMPOSE_FILE_PATTERN: ${{ inputs.docker-compose-file-pattern }}
           REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
           REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
         run: |
           set -eu
           test -n "$REGISTRY_NAME"
-          test -n "$DOCKER_COMPOSE_FILE_PATTERN"
           test -n "$REGISTRY_USERNAME"
           test -n "$REGISTRY_PASSWORD"
+
+      - name: Validate deployment compose inputs
+        if: ${{ inputs.enable-push && inputs.prepare-deployment-compose }}
+        env:
+          DOCKER_COMPOSE_FILE_PATTERN: ${{ inputs.docker-compose-file-pattern }}
+        run: |
+          set -eu
+          test -n "$DOCKER_COMPOSE_FILE_PATTERN"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
@@ -124,7 +130,7 @@ jobs:
             ${{ inputs.registry-name }}/${{ inputs.image-name }}:${{ steps.version.outputs.VERSION }}
 
       - name: Prepare deployment docker-compose
-        if: ${{ inputs.prepare-deployment-compose }}
+        if: ${{ inputs.enable-push && inputs.prepare-deployment-compose }}
         run: |
           mkdir -p deployment-compose
           for file in ${{ inputs.docker-compose-file-pattern }}; do
@@ -136,7 +142,7 @@ jobs:
           done
 
       - name: Upload docker-compose artifact
-        if: ${{ inputs.prepare-deployment-compose }}
+        if: ${{ inputs.enable-push && inputs.prepare-deployment-compose }}
         uses: actions/upload-artifact@v7
         with:
           name: modified-docker-compose
