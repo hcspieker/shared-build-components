@@ -22,7 +22,7 @@ Reusable workflows in this repository:
 
 ```yaml
     - name: Build dotnet projects
-      uses: hcspieker/shared-build-components/.github/actions/dotnet-build@v3.0.0
+      uses: hcspieker/shared-build-components/.github/actions/dotnet-build@v3.1.0
       with:
         build-filter: 'MySolution/MySolution.sln'
 ```
@@ -31,7 +31,7 @@ Reusable workflows in this repository:
 ```yaml
 jobs:
   call-dotnet_web_build:
-    uses: hcspieker/shared-build-components/.github/workflows/dotnet_web_build.yml@v3.0.0
+    uses: hcspieker/shared-build-components/.github/workflows/dotnet_web_build.yml@v3.1.0
     with:
       enable-scss-compile: true
       css-directory: 'MySolution/MyWebProject/wwwroot/css'
@@ -41,6 +41,6 @@ jobs:
 
 ## Versioning and stability
 
-- For production workflows pin to a tag or commit SHA, e.g. `uses: hcspieker/shared-build-components/.github/actions/dotnet-build@v3.0.0` or `@<sha>`.
+- For production workflows pin to a tag or commit SHA, e.g. `uses: hcspieker/shared-build-components/.github/actions/dotnet-build@v3.1.0` or `@<sha>`.
 - Using `@main` is convenient for development but can introduce breaking changes to consumers.
 
