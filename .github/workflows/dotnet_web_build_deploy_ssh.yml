@@ -108,7 +108,7 @@ jobs:
   build:
     runs-on: ${{ inputs.runner-name }}
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
   
     - name: Compile SCSS
       uses: hcspieker/shared-build-components/.github/actions/scss-compile@v3.1.0
